@@ -179,3 +179,72 @@ export async function fetchSettings() {
     };
   });
 }
+
+export type PipelineStats = {
+  watched_active: number;
+  watched_inactive: number;
+  episodes_indexed: number;
+  episodes_with_transcript: number;
+  episodes_without_transcript: number;
+  transcript_mb: number;
+  tweets_seen_total: number;
+  tweets_seen_24h: number;
+  candidates_total: number;
+  candidates_new: number;
+  candidates_responded: number;
+  candidates_posted: number;
+  candidates_rejected: number;
+  responses_total: number;
+  responses_unscored: number;
+  responses_autoreject: number;
+  responses_mid: number;
+  responses_high: number;
+  decisions_total: number;
+  posted_total: number;
+  rejected_total: number;
+  authors_cooldown: number;
+  topic_cooldowns: number;
+  episodes_with_longread: number;
+  episode_nrs_present: number[];
+};
+
+export async function fetchPipelineStats(): Promise<PipelineStats> {
+  return withClient(async (c) => {
+    const { rows } = await c.query<any>(
+      `SELECT
+         (SELECT COUNT(*) FROM watched_accounts WHERE active)::int AS watched_active,
+         (SELECT COUNT(*) FROM watched_accounts WHERE NOT active)::int AS watched_inactive,
+         (SELECT COUNT(*) FROM episodes_search)::int AS episodes_indexed,
+         (SELECT COUNT(*) FROM episodes_search WHERE transcript_text IS NOT NULL)::int AS episodes_with_transcript,
+         (SELECT COUNT(*) FROM episodes_search WHERE transcript_text IS NULL)::int AS episodes_without_transcript,
+         COALESCE((SELECT SUM(LENGTH(transcript_text))/1024.0/1024.0 FROM episodes_search), 0)::float AS transcript_mb,
+         (SELECT COUNT(*) FROM seen_tweets)::int AS tweets_seen_total,
+         (SELECT COUNT(*) FROM seen_tweets WHERE fetched_at > NOW() - INTERVAL '24 hours')::int AS tweets_seen_24h,
+         (SELECT COUNT(*) FROM candidates)::int AS candidates_total,
+         (SELECT COUNT(*) FROM candidates WHERE status='new')::int AS candidates_new,
+         (SELECT COUNT(*) FROM candidates WHERE status='responded')::int AS candidates_responded,
+         (SELECT COUNT(*) FROM candidates WHERE status='posted')::int AS candidates_posted,
+         (SELECT COUNT(*) FROM candidates WHERE status='rejected')::int AS candidates_rejected,
+         (SELECT COUNT(*) FROM responses)::int AS responses_total,
+         (SELECT COUNT(*) FROM responses WHERE composite_score IS NULL)::int AS responses_unscored,
+         (SELECT COUNT(*) FROM responses WHERE composite_score = -1)::int AS responses_autoreject,
+         (SELECT COUNT(*) FROM responses WHERE composite_score BETWEEN 5 AND 6.99)::int AS responses_mid,
+         (SELECT COUNT(*) FROM responses WHERE composite_score >= 7)::int AS responses_high,
+         (SELECT COUNT(*) FROM decisions)::int AS decisions_total,
+         (SELECT COUNT(*) FROM decisions WHERE action='posted')::int AS posted_total,
+         (SELECT COUNT(*) FROM decisions WHERE action='rejected')::int AS rejected_total,
+         (SELECT COUNT(*) FROM authors_replied)::int AS authors_cooldown,
+         (SELECT COUNT(*) FROM topic_cooldowns)::int AS topic_cooldowns,
+         (SELECT COALESCE(jsonb_agg(episode_nr ORDER BY episode_nr), '[]'::jsonb) FROM episodes_search) AS episode_nrs_present
+      `,
+    );
+    const r = rows[0];
+    return {
+      ...r,
+      transcript_mb: Number(r.transcript_mb || 0),
+      episode_nrs_present: r.episode_nrs_present || [],
+      // longreads we infer as 0 for now — site rebuild round will fill this
+      episodes_with_longread: 7, // hardcoded current state; refine when pipeline tracks it
+    } as PipelineStats;
+  });
+}

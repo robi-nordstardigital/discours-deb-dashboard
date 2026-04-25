@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function Nav({ active }: { active: "queue" | "history" | "settings" }) {
+export function Nav({ active }: { active: "queue" | "data" | "history" | "settings" }) {
   const Item = ({ href, label, k }: { href: string; label: string; k: string }) => (
     <Link
       href={href}
@@ -31,6 +31,7 @@ export function Nav({ active }: { active: "queue" | "history" | "settings" }) {
         </Link>
         <nav className="flex gap-1">
           <Item href="/queue" label="Queue" k="queue" />
+          <Item href="/data" label="Data" k="data" />
           <Item href="/history" label="History" k="history" />
           <Item href="/settings" label="Settings" k="settings" />
         </nav>
