@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getIronSession, type SessionOptions } from "iron-session";
+import { getIronSession, type IronSession, type SessionOptions } from "iron-session";
 
 export type Session = { user?: string };
 
@@ -14,7 +14,7 @@ const opts: SessionOptions = {
   },
 };
 
-export async function getSession(): Promise<Session & { save: () => Promise<void>; destroy: () => Promise<void> }> {
+export async function getSession(): Promise<IronSession<Session>> {
   const store = await cookies();
   return getIronSession<Session>(store, opts);
 }
