@@ -1,24 +1,46 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Poppins:ital,wght@0,400;1,300&display=swap');
 
 @theme {
-  --color-bordeaux: #530D27;
-  --color-bordeaux-soft: #6f1933;
-  --color-glass: rgba(255, 255, 255, 0.04);
-  --color-glass-strong: rgba(255, 255, 255, 0.08);
-  --color-line: rgba(255, 255, 255, 0.10);
-  --color-ink: #fafafa;
-  --color-mute: #94a3b8;
-  --color-bg: #0a0a0c;
-  --color-bg-soft: #111114;
+  /* Discours brand palette */
+  --color-burgundy-deep: #2E0A11;
+  --color-burgundy-mid: #5A1820;
+  --color-burgundy-soft: #7A2430;
+  --color-rose: #D94E6A;
+  --color-rose-muted: #B13C56;
+  --color-cream: #F5EFE6;
+  --color-cream-warm: #EDE3D4;
+  --color-ink: #1A0509;
+  --color-paper: #FBF7F0;
+  --color-yt-red: #cc0000;
+
+  /* Surfaces */
+  --color-bg: #14080c;
+  --color-bg-soft: #1c0a10;
+  --color-glass: rgba(245, 239, 230, 0.04);
+  --color-glass-strong: rgba(245, 239, 230, 0.07);
+  --color-line: rgba(245, 239, 230, 0.10);
+  --color-line-strong: rgba(245, 239, 230, 0.18);
+  --color-text: #f5efe6;
+  --color-mute: #b6a8a0;
+
+  --font-sans: 'Lato', -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+  --font-italic: 'Poppins', Georgia, serif;
 }
 
 html, body {
-  background: radial-gradient(circle at top, #1a1018 0%, #0a0a0c 60%);
-  color: var(--color-ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Inter", sans-serif;
+  background:
+    radial-gradient(circle at top right, rgba(122, 36, 48, 0.18) 0%, transparent 60%),
+    radial-gradient(circle at bottom left, rgba(217, 78, 106, 0.06) 0%, transparent 50%),
+    var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.005em;
 }
+
+.serif-italic { font-family: var(--font-italic); font-style: italic; font-weight: 300; }
 
 .glass {
   background: linear-gradient(180deg, var(--color-glass-strong), var(--color-glass));
@@ -28,28 +50,88 @@ html, body {
 }
 
 .glass-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  background: linear-gradient(180deg, rgba(245,239,230,0.05), rgba(245,239,230,0.015));
   border: 1px solid var(--color-line);
-  border-radius: 18px;
+  border-radius: 14px;
   backdrop-filter: blur(20px) saturate(140%);
-  transition: border-color .15s ease, transform .15s ease;
+  transition: border-color .15s ease, transform .15s ease, background .15s ease;
 }
-.glass-card:hover { border-color: rgba(255,255,255,0.18); }
+.glass-card:hover { border-color: var(--color-line-strong); }
+
+.tweet-card {
+  background: linear-gradient(180deg, rgba(122,36,48,0.20), rgba(46,10,17,0.55));
+  border: 1px solid rgba(217, 78, 106, 0.22);
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 0 rgba(245,239,230,0.04) inset, 0 18px 40px rgba(0,0,0,0.28);
+}
+
+.bordeaux-pipe {
+  border-left: 3px solid var(--color-rose);
+  padding-left: 12px;
+}
+
+.brand-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-rose);
+  font-weight: 700;
+}
 
 .btn-publish {
   background: linear-gradient(180deg, #16a34a, #0e7d39);
-  box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 0 0 1px rgba(0,0,0,.25);
+  box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 0 0 1px rgba(0,0,0,.25), 0 8px 20px rgba(22,163,74,0.25);
 }
-.btn-publish:hover { filter: brightness(1.08); }
+.btn-publish:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-publish:active { transform: translateY(0); }
 
 .btn-reject {
   background: linear-gradient(180deg, #b91c1c, #7f1414);
   box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 0 0 1px rgba(0,0,0,.25);
 }
-.btn-reject:hover { filter: brightness(1.08); }
+.btn-reject:hover { filter: brightness(1.1); }
 
-.score-pill {
-  font-variant-numeric: tabular-nums;
-  font-size: 11px;
-  letter-spacing: .04em;
+.btn-secondary {
+  background: rgba(245,239,230,0.04);
+  border: 1px solid var(--color-line);
 }
+.btn-secondary:hover { background: rgba(245,239,230,0.08); border-color: var(--color-line-strong); }
+
+.score-bar {
+  height: 4px;
+  background: rgba(245,239,230,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-rose-muted), var(--color-rose));
+  border-radius: 999px;
+}
+
+.composite-pill {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.composite-strong { background: rgba(22,163,74,0.18); color: #6ee7b7; border: 1px solid rgba(22,163,74,0.4); }
+.composite-mid    { background: rgba(217,78,106,0.18); color: var(--color-rose); border: 1px solid rgba(217,78,106,0.45); }
+.composite-weak   { background: rgba(220,38,38,0.18); color: #fecaca; border: 1px solid rgba(220,38,38,0.45); }
+
+.score-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.x-link {
+  color: var(--color-cream);
+  border-bottom: 1px solid rgba(245,239,230,0.15);
+  transition: border-color .15s ease, color .15s ease;
+}
+.x-link:hover { color: white; border-color: var(--color-rose); }
+
+textarea, input { font-family: inherit; }
+textarea:focus, input:focus { outline: none; }

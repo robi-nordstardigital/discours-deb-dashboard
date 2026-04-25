@@ -30,9 +30,11 @@ export type QueueItem = {
   tweet_author: string;
   tweet_author_name: string | null;
   tweet_author_followers: number | null;
+  tweet_created_at: string | null;
   tweet_lang: string | null;
+  tweet_url: string;
   bm25_top_score: number;
-  top_episode_titles: string[];
+  top_episodes: { episode_nr: number; title: string; rank: number }[];
   responses: ResponseVariant[];
 };
 
@@ -90,16 +92,25 @@ export async function fetchQueue(limit = 30): Promise<QueueItem[]> {
     return rows.map((r) => {
       const tw = r.tweet_json || {};
       const eps = (r.top_episodes as any[]) || [];
+      const handle = tw.author_username || "";
       return {
         candidate_id: r.candidate_id,
         tweet_id: r.tweet_id,
         tweet_text: tw.text || "",
-        tweet_author: tw.author_username || tw.author_id || "",
+        tweet_author: handle || tw.author_id || "",
         tweet_author_name: tw.author_name || null,
         tweet_author_followers: tw.author_followers ?? null,
+        tweet_created_at: tw.created_at || null,
         tweet_lang: tw.lang ?? null,
+        tweet_url: handle
+          ? `https://x.com/${handle}/status/${r.tweet_id}`
+          : `https://x.com/i/status/${r.tweet_id}`,
         bm25_top_score: Number(r.bm25_top_score),
-        top_episode_titles: eps.slice(0, 3).map((e) => `${e.episode_nr}: ${e.title}`),
+        top_episodes: eps.slice(0, 3).map((e) => ({
+          episode_nr: e.episode_nr,
+          title: e.title,
+          rank: Number(e.rank),
+        })),
         responses: (r.responses as ResponseVariant[]).filter((v) => v.composite_score !== null),
       };
     });

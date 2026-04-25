@@ -1,180 +1,99 @@
 import { Nav } from "@/components/Nav";
-import { fetchQueue, type QueueItem, type ResponseVariant } from "@/lib/db";
-import { publishResponse, rejectCandidate, rejectResponse } from "./actions";
+import { TweetCard } from "@/components/Tweet";
+import { VariantCard } from "@/components/VariantCard";
+import { fetchQueue, fetchSettings, type QueueItem } from "@/lib/db";
+import { rejectCandidate } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function ScoreBadge({ value, label }: { value: number; label: string }) {
-  const color =
-    value >= 8 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-      : value >= 6 ? "bg-yellow-500/15 text-yellow-200 border-yellow-500/30"
-      : "bg-red-500/15 text-red-300 border-red-500/30";
-  return (
-    <span
-      title={label}
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded score-pill border ${color}`}
-    >
-      <span className="opacity-70">{label}</span>
-      <span className="font-semibold">{value}</span>
-    </span>
-  );
-}
-
-function VariantCard({ v }: { v: ResponseVariant }) {
-  const composite = v.composite_score ?? 0;
-  const labelMap: Record<string, string> = {
-    beamend_kern: "Beamend",
-    beamend_andere_invalshoek: "Beamend +",
-    beamend_guest_perspective: "Guest",
-    nuancerend: "Nuancerend",
-    ludiek: "Ludiek",
-    ludiek_luchtig: "Ludiek",
-  };
-  const label = labelMap[v.variant_label || ""] || v.variant_label || `Variant ${v.variant_idx}`;
-  const compositeClass =
-    composite >= 8 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-      : composite >= 6 ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-200"
-      : "border-red-500/40 bg-red-500/10 text-red-200";
-  return (
-    <form action={publishResponse} className="glass-card p-4 flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wider text-[color:var(--color-mute)]">
-            {label}
-          </span>
-          {v.episode_nr && (
-            <span className="text-xs text-[color:var(--color-mute)]">EP {v.episode_nr}</span>
-          )}
-        </div>
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded-full border score-pill ${compositeClass}`}
-        >
-          {composite.toFixed(2)}
-        </span>
-      </div>
-
-      <textarea
-        name="edited_text"
-        rows={4}
-        defaultValue={v.text}
-        maxLength={280}
-        className="bg-black/30 border border-[color:var(--color-line)] rounded-lg p-3 text-sm leading-relaxed outline-none focus:border-white/40 resize-none"
-      />
-
-      <div className="flex flex-wrap gap-1.5">
-        {v.scores &&
-          (["relevance", "appropriateness", "authenticity", "added_value", "diversity"] as const).map(
-            (k) =>
-              v.scores?.[k] ? (
-                <ScoreBadge key={k} value={v.scores[k].score} label={k.slice(0, 3).toUpperCase()} />
-              ) : null,
-          )}
-      </div>
-
-      {v.youtube_url && (
-        <a
-          href={v.youtube_url}
-          target="_blank"
-          rel="noopener"
-          className="text-xs text-[color:var(--color-mute)] hover:text-white truncate"
-        >
-          {v.youtube_url}
-        </a>
-      )}
-
-      <input type="hidden" name="response_id" value={v.id} />
-      <div className="flex gap-2">
-        <button
-          formAction={publishResponse}
-          className="flex-1 btn-publish text-white font-medium rounded-lg py-2 text-sm"
-        >
-          Publish
-        </button>
-        <button
-          formAction={rejectResponse}
-          className="btn-reject text-white font-medium rounded-lg px-3 py-2 text-sm"
-        >
-          Reject
-        </button>
-      </div>
-    </form>
-  );
-}
-
 function CandidateRow({ item }: { item: QueueItem }) {
+  const top = Math.max(0, ...item.responses.map((v) => v.composite_score ?? 0));
   return (
-    <article className="space-y-3">
-      <header className="glass rounded-2xl p-4">
-        <div className="flex items-baseline justify-between flex-wrap gap-2">
-          <div>
-            <div className="text-sm font-medium">
-              @{item.tweet_author}{" "}
-              {item.tweet_author_name && (
-                <span className="text-[color:var(--color-mute)] font-normal">
-                  ({item.tweet_author_name})
-                </span>
-              )}
+    <article className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,5fr)] gap-4 items-start">
+        <TweetCard item={item} />
+        <div>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="brand-eyebrow flex items-center gap-2">
+              <span>5 voorgestelde reacties</span>
+              <span className="text-[color:var(--color-mute)] normal-case font-normal tracking-normal">
+                top {top.toFixed(2)}
+              </span>
             </div>
-            <div className="text-xs text-[color:var(--color-mute)]">
-              BM25 {item.bm25_top_score.toFixed(3)} · {item.responses.length} varianten ·
-              {item.tweet_author_followers != null && ` ${item.tweet_author_followers} followers ·`}{" "}
-              <a
-                className="hover:text-white underline-offset-2 hover:underline"
-                href={`https://x.com/${item.tweet_author}/status/${item.tweet_id}`}
-                target="_blank"
-                rel="noopener"
-              >
-                Open op X
-              </a>
-            </div>
+            <form action={rejectCandidate}>
+              <input type="hidden" name="candidate_id" value={item.candidate_id} />
+              <button className="btn-secondary text-[11px] text-[color:var(--color-mute)] hover:text-red-300 px-2 py-1 rounded">
+                Sla deze tweet over
+              </button>
+            </form>
           </div>
-          <form action={rejectCandidate}>
-            <input type="hidden" name="candidate_id" value={item.candidate_id} />
-            <button className="text-xs text-[color:var(--color-mute)] hover:text-red-300 px-2 py-1">
-              Sla deze kandidaat over
-            </button>
-          </form>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+            {item.responses.map((v) => (
+              <VariantCard key={v.id} v={v} />
+            ))}
+          </div>
         </div>
-        <p className="mt-2 text-base leading-relaxed">{item.tweet_text}</p>
-        {item.top_episode_titles.length > 0 && (
-          <p className="mt-2 text-xs text-[color:var(--color-mute)]">
-            Best gematched: {item.top_episode_titles.join(" · ")}
-          </p>
-        )}
-      </header>
-      <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {item.responses.map((v) => (
-          <VariantCard key={v.id} v={v} />
-        ))}
       </div>
     </article>
   );
 }
 
+function StatusFooter({ counts }: { counts: any }) {
+  const items: { label: string; value: number | string }[] = [
+    { label: "Active accts", value: counts.active_accounts },
+    { label: "Tweets seen", value: counts.seen },
+    { label: "Candidates", value: counts.new_candidates },
+    { label: "High quality", value: counts.high_quality },
+    { label: "Posted 24h", value: counts.posted_24h },
+  ];
+  return (
+    <div className="glass rounded-xl px-5 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs">
+      <span className="brand-eyebrow">Pipeline status</span>
+      <div className="flex flex-wrap gap-x-6 gap-y-1">
+        {items.map((i) => (
+          <div key={i.label} className="flex items-center gap-2">
+            <span className="text-[color:var(--color-mute)]">{i.label}</span>
+            <span className="font-bold tabular-nums">{i.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function QueuePage() {
-  const items = await fetchQueue(20);
+  const [items, settings] = await Promise.all([fetchQueue(20), fetchSettings()]);
   return (
     <>
       <Nav active="queue" />
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-8">
-        <div className="flex items-center justify-between">
+      <main className="max-w-7xl mx-auto px-5 py-6 space-y-6">
+        <div className="flex items-end justify-between flex-wrap gap-2">
           <div>
-            <h1 className="text-lg font-semibold">Queue</h1>
-            <p className="text-sm text-[color:var(--color-mute)]">
-              {items.length} kandidaten met scoring ≥ 5 wachten op review
+            <h1 className="text-2xl font-black tracking-tight">Queue</h1>
+            <p className="text-sm text-[color:var(--color-mute)] mt-0.5">
+              {items.length} tweet{items.length === 1 ? "" : "s"} met scoring ≥ 5
+              wachten op review.{" "}
+              <span className="serif-italic">Degelijkheid &amp; dialoog.</span>
             </p>
           </div>
         </div>
-        {items.length === 0 && (
-          <div className="glass-card p-8 text-center text-[color:var(--color-mute)]">
-            Geen kandidaten in de wachtrij. Wacht op de volgende watcher run, of trigger
-            handmatig <code>scripts/deb_watcher.py</code>.
+        <StatusFooter counts={settings.counts} />
+        {items.length === 0 ? (
+          <div className="glass-card p-10 text-center">
+            <div className="brand-eyebrow mb-2">Wachtrij leeg</div>
+            <p className="text-[color:var(--color-mute)] text-sm">
+              Wacht op de volgende watcher run, of trigger handmatig{" "}
+              <code className="px-1.5 py-0.5 rounded bg-black/40 text-xs">scripts/deb_watcher.py</code>.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {items.map((item) => (
+              <CandidateRow key={item.candidate_id} item={item} />
+            ))}
           </div>
         )}
-        {items.map((item) => (
-          <CandidateRow key={item.candidate_id} item={item} />
-        ))}
       </main>
     </>
   );
