@@ -22,7 +22,7 @@ export function Nav({ active }: { active: "queue" | "history" | "settings" }) {
             alt="Discours"
             className="h-8 w-auto opacity-95 group-hover:opacity-100 transition-opacity"
           />
-          <div className="leading-tight">
+          <div className="leading-tight hidden sm:block">
             <div className="font-black text-[15px] tracking-tight">DEB</div>
             <div className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-mute)] -mt-0.5">
               Discours Engine Bot
