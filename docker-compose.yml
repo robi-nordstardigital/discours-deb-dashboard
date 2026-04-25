@@ -1,0 +1,15 @@
+services:
+  discours-deb-dashboard:
+    build: .
+    container_name: discours-deb-dashboard
+    restart: unless-stopped
+    ports:
+      - "4003:3008"
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3008/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
