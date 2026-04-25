@@ -75,13 +75,37 @@ export function VariantCard({ v }: { v: ResponseVariant }) {
       <div className="space-y-1.5">
         {v.scores &&
           SCORE_KEYS.map((k) => {
-            const s = v.scores?.[k];
+            const s = v.scores?.[k] as
+              | { score: number; why: string; linked?: boolean }
+              | undefined;
             if (!s) return null;
+            const isRelevance = k === "relevance";
+            const linkedFalse = isRelevance && s.linked === false;
             return (
-              <div key={k} className="flex items-center gap-2">
-                <span className="score-tag w-6 text-[color:var(--color-mute)]">{SCORE_SHORT[k]}</span>
+              <div
+                key={k}
+                className="flex items-center gap-2"
+                title={s.why || ""}
+              >
+                <span
+                  className={`score-tag w-6 ${
+                    linkedFalse
+                      ? "text-red-400 font-black"
+                      : "text-[color:var(--color-mute)]"
+                  }`}
+                >
+                  {SCORE_SHORT[k]}
+                </span>
                 <div className="score-bar flex-1">
-                  <div className="score-bar-fill" style={{ width: `${s.score * 10}%` }} />
+                  <div
+                    className="score-bar-fill"
+                    style={{
+                      width: `${s.score * 10}%`,
+                      ...(linkedFalse
+                        ? { background: "linear-gradient(90deg, #b91c1c, #ef4444)" }
+                        : {}),
+                    }}
+                  />
                 </div>
                 <span className="text-[10px] tabular-nums text-[color:var(--color-mute)] w-4 text-right">
                   {s.score}
@@ -89,6 +113,15 @@ export function VariantCard({ v }: { v: ResponseVariant }) {
               </div>
             );
           })}
+        {v.scores?.relevance && (v.scores.relevance as any).why && (
+          <p
+            className="text-[10px] text-[color:var(--color-mute)] italic leading-snug pt-1"
+            title={(v.scores.relevance as any).why}
+          >
+            <span className="brand-eyebrow not-italic mr-1">Rel:</span>
+            {((v.scores.relevance as any).why as string).slice(0, 110)}
+          </p>
+        )}
       </div>
 
       {v.youtube_url && (
