@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "discours-deb-dashboard": {
+      "name": "DEB Dashboard",
+      "command": "npm run dev",
+      "cwd": ".",
+      "port": 3008,
+      "url": "http://localhost:3008/login"
+    }
+  }
+}
