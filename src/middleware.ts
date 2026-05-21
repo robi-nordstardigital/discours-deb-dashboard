@@ -4,6 +4,8 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (pathname.startsWith("/api/health")) return NextResponse.next();
   if (pathname === "/login" || pathname.startsWith("/api/auth")) return NextResponse.next();
+  // /engine is een publieke overzichtspagina (geen DB-queries, geen acties)
+  if (pathname === "/engine") return NextResponse.next();
   const cookie = req.cookies.get("deb_session");
   if (!cookie) {
     const url = req.nextUrl.clone();
