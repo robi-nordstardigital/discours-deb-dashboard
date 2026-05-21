@@ -31,12 +31,22 @@ src/
   lib/session.ts      iron-session cookie helper
   middleware.ts       Auth gate, redirect to /login
   app/login/          Password form + server action
+  app/engine/         Discours Media Engine — visuele overzichtspagina
   app/queue/          Main approval UI + actions (publish/reject)
   app/history/        Last 30 days decisions
   app/settings/       Watched accounts + counts
   app/api/health/     200 if DB reachable
   components/Nav.tsx  Sticky glass nav bar
 ```
+
+## /engine pagina
+
+Visualisatie van de volledige Discours productie-pipeline op één pagina. SVG
+flowchart toont input (YouTube) → woensdag-pipeline → vier outputs (website,
+~40 shorts, DEB X-bot, nieuwsbrief) → daily publish naar X/IG/TikTok/YT.
+Daaronder detail-cards per onderdeel met script-paden, instructie-MD's,
+n8n-workflow-namen en API-integraties. Pure server-side rendered (geen DB
+queries), auth-protected via dezelfde middleware.
 
 ## Database
 Reads/writes Postgres `deb` op `192.168.50.24:5433` (Docker container `postgres-deb`). Schema via `~/Projects/Discours/scripts/deb_init_db.py`.
