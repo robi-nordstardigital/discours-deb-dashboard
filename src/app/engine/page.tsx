@@ -1,4 +1,5 @@
 import { Nav } from "@/components/Nav";
+import { SCRIPTS, RULES } from "./info";
 
 type Status = "live" | "idle" | "manual";
 
@@ -96,6 +97,49 @@ function Card({
           </>
         )}
       </dl>
+
+      {/* More info — uitklap met script + rule samenvattingen */}
+      {((scripts && scripts.some((s) => SCRIPTS[s])) ||
+        (rules && rules.some((r) => RULES[r]))) && (
+        <details className="group mt-1 border-t border-[color:var(--color-line)] pt-3">
+          <summary className="cursor-pointer text-[11px] uppercase tracking-[0.16em] font-bold text-[color:var(--color-rose)] hover:text-white transition-colors select-none flex items-center gap-2">
+            <span className="group-open:rotate-90 transition-transform inline-block">▸</span>
+            More info
+          </summary>
+          <div className="mt-3 space-y-3 text-[12px] leading-relaxed">
+            {scripts && scripts.filter((s) => SCRIPTS[s]).length > 0 && (
+              <div className="space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-[color:var(--color-mute)]">
+                  Scripts
+                </div>
+                {scripts
+                  .filter((s) => SCRIPTS[s])
+                  .map((s) => (
+                    <div key={s} className="border-l-2 border-[color:var(--color-rose)]/40 pl-3">
+                      <code className="text-[11px] text-[color:var(--color-cream)] font-mono">{s}</code>
+                      <p className="text-[color:var(--color-mute)] mt-1">{SCRIPTS[s].what}</p>
+                    </div>
+                  ))}
+              </div>
+            )}
+            {rules && rules.filter((r) => RULES[r]).length > 0 && (
+              <div className="space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-[color:var(--color-mute)]">
+                  Regels (instructie-MDs)
+                </div>
+                {rules
+                  .filter((r) => RULES[r])
+                  .map((r) => (
+                    <div key={r} className="border-l-2 border-amber-400/40 pl-3">
+                      <code className="text-[11px] text-[color:var(--color-cream)] font-mono">{r}</code>
+                      <p className="text-[color:var(--color-mute)] mt-1">{RULES[r].what}</p>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </details>
+      )}
     </article>
   );
 }
