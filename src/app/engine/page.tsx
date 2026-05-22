@@ -40,6 +40,7 @@ function Card({
   rules,
   workflow,
   apis,
+  reason,
 }: {
   title: string;
   schedule: string;
@@ -49,6 +50,7 @@ function Card({
   rules?: string[];
   workflow?: string;
   apis?: string[];
+  reason?: string;
 }) {
   return (
     <article className="glass-card p-5 rounded-2xl flex flex-col gap-3">
@@ -57,6 +59,12 @@ function Card({
         <StatusBadge s={status} />
       </header>
       <p className="text-[13px] text-[color:var(--color-mute)] leading-relaxed">{description}</p>
+      {reason && (
+        <p className="text-[12px] text-amber-300/90 leading-relaxed border-l-2 border-amber-400/40 pl-2">
+          <span className="font-bold uppercase tracking-[0.14em] text-[10px] text-amber-300/70">Reden inactief: </span>
+          {reason}
+        </p>
+      )}
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-[12px]">
         <dt className="text-[color:var(--color-mute)]">Schedule</dt>
         <dd className="font-mono text-[color:var(--color-cream)]">{schedule}</dd>
@@ -143,6 +151,67 @@ function Card({
     </article>
   );
 }
+
+function EpisodeTimeline() {
+  // De keten die afloopt zodra een nieuwe aflevering op YouTube verschijnt.
+  const steps = [
+    {
+      when: "WO 19:00",
+      title: "Pipeline draait",
+      detail: "detect_new → fetch → 4 Claude agents → sanity-check + auto-fix → opus_clip submit → build_site → deploy",
+      workflow: "discours-auto-process",
+      status: "live" as Status,
+    },
+    {
+      when: "WO 19:30+",
+      title: "Opus rendert ~30-40 clips",
+      detail: "Async, ~10-15 min per project. Stage QUEUED → PROCESSING → COMPLETE. Brand-template 'Discours' auto-toegepast.",
+      workflow: "(Opus eigen pipeline)",
+      status: "live" as Status,
+    },
+    {
+      when: "DO 12:00",
+      title: "Eerste 3 shorts live",
+      detail: "ensure_clips_fetched self-heal'd clips.json, Claude rewrite per clip (topic + hook), POST naar X / IG Reels / TikTok / YT Shorts (twee retries op rate-limits).",
+      workflow: "discours-shorts-publish",
+      status: "live" as Status,
+    },
+    {
+      when: "VR–WO 12:00",
+      title: "21 clips over 7 dagen",
+      detail: "Elke dag pakt het script de top 3 nog-niet-gestarte clips op score, plus retry voor partial-success (bv YT failures). Daarna idle tot volgende WO.",
+      workflow: "discours-shorts-publish",
+      status: "live" as Status,
+    },
+  ];
+  return (
+    <section className="space-y-5">
+      <div className="flex items-baseline gap-3">
+        <h2 className="text-2xl font-black tracking-tight">Op nieuwe aflevering</h2>
+        <span className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--color-mute)]">tijdlijn van zelf-werkende keten</span>
+      </div>
+      <ol className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {steps.map((s, i) => (
+          <li key={i} className="glass-card p-5 rounded-2xl relative">
+            <div className="absolute -top-3 left-5 flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[color:var(--color-rose)] text-white font-black text-[12px]">{i + 1}</span>
+              <span className="text-[10px] uppercase tracking-[0.22em] font-bold text-[color:var(--color-cream)] bg-[color:var(--color-bg-soft)] px-2 py-0.5 rounded-md border border-[color:var(--color-line)]">
+                {s.when}
+              </span>
+            </div>
+            <h3 className="text-[15px] font-bold leading-tight mt-3">{s.title}</h3>
+            <p className="text-[12px] text-[color:var(--color-mute)] leading-relaxed mt-2">{s.detail}</p>
+            <div className="mt-3 text-[11px] flex items-center justify-between gap-2">
+              <code className="font-mono text-[color:var(--color-rose)] truncate">{s.workflow}</code>
+              <StatusBadge s={s.status} />
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 
 function Flowchart() {
   // Hand-rolled SVG flowchart. Layout grid:
@@ -340,7 +409,10 @@ export default function EnginePage() {
           </p>
         </header>
 
-        {/* FLOWCHART */}
+        {/* TIJDLIJN — wat gebeurt er op woensdag */}
+        <EpisodeTimeline />
+
+        {/* FLOWCHART — bredere architectuur */}
         <section className="glass rounded-2xl p-6 md:p-8 overflow-x-auto">
           <Flowchart />
         </section>
@@ -419,27 +491,14 @@ export default function EnginePage() {
               scripts={["scripts/opus_publish_episode.py"]}
               apis={["Opus Clips", "Anthropic (Haiku rewrite)"]}
             />
+            {/* DEB X-bot kaart staat hieronder bij de idle workflows. */}
             <Card
-              title="DEB X-reply engine"
-              schedule="Watch elke 4u + :30, scoring elke 2u"
-              status="live"
-              workflow="discours-deb-watch / -respond-score / -publish"
-              description="GetXAPI haalt timeline + mentions, BM25 matcht relevante episodes, Claude genereert 5 reply-varianten, 5 scoring-agents (Relevance hard-floor < 6). Beste variant gaat naar de Queue, jij keurt goed of weigert."
-              scripts={[
-                "scripts/deb_watcher.py",
-                "scripts/deb_generate_responses.py",
-                "scripts/deb_score_responses.py",
-                "scripts/deb_post_tweet.py",
-              ]}
-              rules={[".claude/rules/deb-style-prompt.md", ".claude/rules/deb-scoring-prompts.md"]}
-              apis={["GetXAPI", "X (Tweepy)", "Anthropic", "Postgres"]}
-            />
-            <Card
-              title="Nieuwsbrief"
+              title="Nieuwsbrief weekly + monthly"
               schedule="Do 08:00 (wekelijks) + 1e v/d maand (digest)"
               status="idle"
               workflow="discours-weekly-send / discours-monthly-digest"
-              description="Workflows geïmporteerd in n8n maar nog inactief tot DNS reputation opgebouwd is. Resend audience 'Discours Nieuwsbrief' (id 5822cf9c…), opt-in via homepage modal."
+              description="Workflows klaar maar nog niet geïmporteerd in n8n. Resend audience 'Discours Nieuwsbrief' (id 5822cf9c…) is gevuld via de homepage-modal."
+              reason="Warm-up fase. Eerst 2-4 weken organische groei via signup voor we structureel naar de hele audience sturen — anders schaadt het de domain reputation."
               scripts={["scripts/send_weekly_email.py", "scripts/send_monthly_email.py", "scripts/signup_server.py"]}
               apis={["Resend"]}
             />
@@ -449,9 +508,21 @@ export default function EnginePage() {
               status="idle"
               workflow="discours-sales-enrich / -drafts / -followups / -send"
               description="3-touch sequence vanuit Notion CRM. AI enricht bedrijven (FTE, klanten, recent nieuws), schrijft drafts via templates, jij keurt goed in Notion, n8n stuurt via Resend."
+              reason="Wacht tot de nieuwsbrief 2-4 weken loopt — pas dán heeft het domein voldoende reputation om koude sales-mails af te leveren zonder in spam te belanden."
               scripts={["scripts/sales.py", "scripts/sales_draft.py"]}
               rules={[".claude/rules/sales-outreach-prompt.md"]}
               apis={["Notion", "Resend", "Anthropic"]}
+            />
+            <Card
+              title="DEB X-bot (queue + score + publish)"
+              schedule="Watch elke 4u + :30, score elke 2u, publish via webhook"
+              status="idle"
+              workflow="discours-deb-watch / -respond-score / -publish / -sync / -daily-report / -episode-burst"
+              description="Volledige X-reply engine: GetXAPI watcher → BM25 match → Claude 5 varianten → 5 scoring-agents → /queue dashboard → Tweepy post."
+              reason="X_CONSUMER_SECRET ontbreekt nog in Linux .env. Pas zodra die er staat kan Tweepy posten en activeren we de 6 DEB-flows."
+              scripts={["scripts/deb_watcher.py", "scripts/deb_generate_responses.py", "scripts/deb_score_responses.py", "scripts/deb_post_tweet.py"]}
+              rules={[".claude/rules/deb-style-prompt.md", ".claude/rules/deb-scoring-prompts.md"]}
+              apis={["GetXAPI", "X (Tweepy)", "Anthropic", "Postgres"]}
             />
             <Card
               title="Shorts watcher"
